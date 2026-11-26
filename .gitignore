@@ -1,0 +1,21 @@
+# .NET build files
+bin/
+obj/
+publish/
+
+# IDE files
+.vs/
+.vscode/
+
+# macOS files
+.DS_Store
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Generated SQLite database
+*.db
+*.db-shm
+*.db-wal

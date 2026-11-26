@@ -1,0 +1,118 @@
+@page "/agent"
+@rendermode InteractiveServer
+
+@using AI4SchoolAgent.Services
+@inject AgentService SchoolAgent
+
+<PageTitle>School AI Agent</PageTitle>
+
+<h3>School AI Agent</h3>
+
+<div class="mb-3">
+    <label>Choose AI Model:</label>
+
+    <select class="form-select"
+            @bind="selectedModel"
+            disabled="@(isLoading || isLoadingModels)">
+
+        <option value="auto">Auto</option>
+
+        @foreach (var model in models)
+        {
+            <option value="@model">@model</option>
+        }
+
+    </select>
+
+    @if (isLoadingModels)
+    {
+        <small>Loading available models...</small>
+    }
+</div>
+
+@if (!string.IsNullOrWhiteSpace(modelError))
+{
+    <div class="alert alert-warning">
+        @modelError
+    </div>
+}
+
+<div class="mb-3">
+    <label>Ask a question about students:</label>
+
+    <textarea class="form-control"
+              rows="4"
+              @bind="prompt">
+    </textarea>
+</div>
+
+<button class="btn btn-primary"
+        @onclick="AskAgent"
+        disabled="@(isLoading || isLoadingModels)">
+
+    @(isLoading ? "Thinking..." : "Ask AI")
+
+</button>
+
+@if (!string.IsNullOrWhiteSpace(response))
+{
+    <div class="alert alert-light mt-3"
+         style="white-space: pre-wrap;">
+        @response
+    </div>
+}
+
+@code {
+    private string prompt = "";
+    private string response = "";
+
+    private string selectedModel = "auto";
+    private List<string> models = new();
+
+    private bool isLoading = false;
+    private bool isLoadingModels = true;
+    private string modelError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            models = await SchoolAgent.GetModelsAsync();
+        }
+        catch (Exception ex)
+{
+    Console.Error.WriteLine(ex.ToString());
+    modelError = "Unable to load available AI models.";
+}
+        finally
+        {
+            isLoadingModels = false;
+        }
+    }
+
+    private async Task AskAgent()
+    {
+        if (string.IsNullOrWhiteSpace(prompt))
+            return;
+
+        isLoading = true;
+        response = "";
+
+        try
+        {
+            response = await SchoolAgent.AskAsync(
+                prompt,
+                selectedModel
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.GetType().Name);
+            response = "Unable to complete the AI request.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
